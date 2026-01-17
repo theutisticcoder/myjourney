@@ -8,7 +8,7 @@
  * - TextToSpeechOutput - The return type for the textToSpeech function.
  */
 
-import { EdgeTTS } from 'universal-edge-tts';
+import { EdgeTTS } from 'edge-tts-universal';
 import { z } from 'genkit';
 
 const TextToSpeechInputSchema = z.object({
