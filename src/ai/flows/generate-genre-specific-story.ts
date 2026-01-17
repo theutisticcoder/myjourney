@@ -47,7 +47,7 @@ const generateGenreSpecificStoryFlow = ai.defineFlow(
   async (input) => {
     const prompt = `You are a story writer who specializes in the ${input.genre} genre. Continue the story based on the following context: ${input.existingStoryContext || 'This is the beginning of the story.'}.
 
-Craft a new chapter for the story with a compelling narrative, tailored to the user's activity: ${input.speedDescription}. The new chapter should be a long chapter (at least 20 paragraphs)). Write in second person.
+Craft a new chapter for the story with a compelling narrative, tailored to the user's activity: ${input.speedDescription}. The new chapter should be a long chapter (at least 12 paragraphs)). Write in second person.
 Plot: ${input.plot}
 
 You MUST respond with a JSON object with a single key "storyChapter" which contains the generated story chapter, a string.`;
