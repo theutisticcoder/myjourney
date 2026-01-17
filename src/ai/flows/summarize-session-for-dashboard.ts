@@ -1,4 +1,4 @@
-s'use server';
+'use server';
 
 /**
  * @fileOverview A flow for summarizing workout session stats for the dashboard.
