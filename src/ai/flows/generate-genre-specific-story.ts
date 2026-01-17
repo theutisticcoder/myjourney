@@ -53,7 +53,7 @@ Plot: ${input.plot}
 You MUST respond with a JSON object with a single key "storyChapter" which contains the generated story chapter, a string.`;
 
     const chatResponse = await mistralClient.chat({
-        model: 'mistral-large-latest',
+        model: 'mistral-tiny-latest',
         messages: [{ role: 'user', content: prompt }],
         responseFormat: { type: 'json_object' },
     });
