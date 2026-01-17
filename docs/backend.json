@@ -1,0 +1,209 @@
+{
+  "entities": {
+    "UserAccount": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAccount",
+      "type": "object",
+      "description": "Stores user account information, including the association with a Google account and preferences.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user account."
+        },
+        "googleId": {
+          "type": "string",
+          "description": "The Google user ID associated with this account.  This is the unique ID provided by Google upon successful authentication."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's username."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "googleId",
+        "email",
+        "username",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Session": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Session",
+      "type": "object",
+      "description": "Represents a user's workout session, storing state information and the generated story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the workout session."
+        },
+        "userAccountId": {
+          "type": "string",
+          "description": "Reference to UserAccount. (Relationship: UserAccount 1:N Session)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the workout session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the workout session ended (can be null if the session is ongoing).",
+          "format": "date-time"
+        },
+        "totalDistance": {
+          "type": "number",
+          "description": "Total distance covered during the session in miles."
+        },
+        "averageSpeed": {
+          "type": "number",
+          "description": "Average speed during the session in MPH."
+        },
+        "storyGenre": {
+          "type": "string",
+          "description": "Genre of the generated story."
+        },
+        "storyContext": {
+          "type": "string",
+          "description": "The full story context of the session as of the last chapter."
+        }
+      },
+      "required": [
+        "id",
+        "userAccountId",
+        "startTime",
+        "totalDistance",
+        "averageSpeed",
+        "storyGenre",
+        "storyContext"
+      ]
+    },
+    "Chapter": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Chapter",
+      "type": "object",
+      "description": "Represents a single chapter in the generated story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the chapter."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Reference to Session. (Relationship: Session 1:N Chapter)"
+        },
+        "chapterNumber": {
+          "type": "number",
+          "description": "The order number of the chapter within the session."
+        },
+        "text": {
+          "type": "string",
+          "description": "The generated text content of the chapter."
+        },
+        "audioBlobUrl": {
+          "type": "string",
+          "description": "URL to the TTS audio blob for this chapter."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the chapter was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "sessionId",
+        "chapterNumber",
+        "text",
+        "audioBlobUrl",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/userAccounts/{userAccountId}",
+        "definition": {
+          "entityName": "UserAccount",
+          "schema": {
+            "$ref": "#/backend/entities/UserAccount"
+          },
+          "description": "Stores user account information. User Accounts are stored at the root level, as it is assumed all authentication has already happened.",
+          "params": [
+            {
+              "name": "userAccountId",
+              "description": "The unique ID of the user account, corresponding to the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userAccounts/{userAccountId}/sessions/{sessionId}",
+        "definition": {
+          "entityName": "Session",
+          "schema": {
+            "$ref": "#/backend/entities/Session"
+          },
+          "description": "Stores workout session data for a user. (Relationship: UserAccount 1:N Session)",
+          "params": [
+            {
+              "name": "userAccountId",
+              "description": "The unique ID of the user account that owns the session."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique ID of the workout session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userAccounts/{userAccountId}/sessions/{sessionId}/chapters/{chapterId}",
+        "definition": {
+          "entityName": "Chapter",
+          "schema": {
+            "$ref": "#/backend/entities/Chapter"
+          },
+          "description": "Stores chapters generated during a workout session. (Relationship: Session 1:N Chapter)",
+          "params": [
+            {
+              "name": "userAccountId",
+              "description": "The unique ID of the user account that owns the session."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique ID of the workout session."
+            },
+            {
+              "name": "chapterId",
+              "description": "The unique ID of the generated chapter."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore data structure is designed to support the 'MyJourneyAI' application, focusing on user accounts, workout sessions, and AI-generated story chapters. The structure prioritizes Authorization Independence via path-based ownership and denormalization where necessary to avoid `get()` calls in security rules, ensuring atomicity and debuggability.  It also leverages Structural Segregation by storing distinct user-owned data in dedicated collections to apply homogeneous security postures. The structure facilitates QAPs by storing data in a predictable, hierarchical structure based on ownership. \n\n*   **User Accounts:** User account data is stored under the `/userAccounts/{userAccountId}` path, with each document representing a user profile and using the `UserAccount` schema. This provides a simple and secure way to manage user data and authentication via `request.auth.uid`.\n*   **Sessions:** Workout sessions are stored as subcollections under each user's account: `/userAccounts/{userAccountId}/sessions/{sessionId}`.  The `Session` documents capture the state of a workout session, including the story genre, context, and metrics. Path-based ownership ensures that only the owning user can access their session data.\n*   **Chapters:** Chapters of the generated story are stored as subcollections under each session: `/userAccounts/{userAccountId}/sessions/{sessionId}/chapters/{chapterId}`. Each `Chapter` document contains the chapter text, audio URL, and creation timestamp. The hierarchical structure enforces ownership and allows for efficient querying of chapters within a specific session.\n\nThis structure promotes Authorization Independence and addresses QAPs by leveraging path-based ownership, which eliminates the need for `get()` calls in security rules.  Each user's data is isolated within their respective subcollections, making it easy to implement rules based on `request.auth.uid` and the document path."
+  }
+}
